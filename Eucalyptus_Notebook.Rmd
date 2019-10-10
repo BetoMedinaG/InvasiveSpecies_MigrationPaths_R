@@ -3,15 +3,19 @@ title: "Eucalipto"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 Loading the libraries
 ```{r}
-library('maptools', 'rgbif', 'dismo')
+library(dismo)
+library(maptools)
 ```
 
 Buscamos datos de ocurrencias de eucalipto en una biblioteca de datos en linea
 ```{r}
+library(rgbif)
+library(knitr)
 eucalyptus_points <- occ_search(scientificName = "Eucalyptus", country = "MX", 
                                 fields = c('name','country','countryCode','stateProvince',
                                            'year','decimalLatitude','decimalLongitude'),
@@ -96,4 +100,3 @@ states_factor <- as.factor(eucalyptus_points$stateProvince)
 counted_states <- plyr::count(states_factor)
 plot(counted_states$x, counted_states$freq)
 ```
-
