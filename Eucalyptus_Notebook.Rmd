@@ -1,0 +1,99 @@
+---
+title: "Eucalipto"
+output:
+  html_document:
+    df_print: paged
+---
+
+Loading the libraries
+```{r}
+library('maptools', 'rgbif', 'dismo')
+```
+
+Buscamos datos de ocurrencias de eucalipto en una biblioteca de datos en linea
+```{r}
+eucalyptus_points <- occ_search(scientificName = "Eucalyptus", country = "MX", 
+                                fields = c('name','country','countryCode','stateProvince',
+                                           'year','decimalLatitude','decimalLongitude'),
+                                limit = 300, return = 'data')
+```
+
+Hacemos un mapa simple mostrando puntos GPS dónde ocurrencias de la especie
+```{r}
+data(wrld_simpl)
+
+xlim <- c(-129,-79)
+ylim <- c(15,35)
+
+plot(wrld_simpl, xlim = xlim, ylim = ylim)
+
+points(eucalyptus_points$decimalLongitude, eucalyptus_points$decimalLatitude, col='red1')
+```
+
+Recolección de datos climaticos en México
+
+```{r}
+path <- file.path(system.file(package="dismo"), 'ex')
+files <- list.files(path, pattern='grd$', full.names=TRUE )
+files
+```
+
+```{r}
+predictors <- stack(files)
+predictors
+```
+
+
+```{r}
+extent_of_mexico_map <- extent(-129, -79, -15, 35)
+predictors_cropped_to_mexico <- crop(predictors, extent_of_mexico_map)
+```
+
+
+```{r}
+set.seed(0)
+group <- kfold(eucalyptus_points, 5)
+pres_train_your_species <- eucalyptus_points[group != 1, ]
+pres_train_your_species <- as.data.frame(pres_train_your_species[,1:2])
+
+pres_test_your_species <- eucalyptus_points[group == 1, ]
+pres_test_your_species <- as.data.frame(pres_test_your_species[,1:2])
+```
+
+
+```{r}
+pred_nf <- dropLayer(predictors_cropped_to_mexico, 'biome')
+backg <- randomPoints(pred_nf, n=1000, ext=extent_of_mexico_map, extf = 1.25)
+colnames(backg) = c('lon', 'lat')
+group <- kfold(backg, 5)
+backg_train <- backg[group != 1, ]
+backg_test <- backg[group == 1, ]
+```
+
+Hacemos el modelo de disfunción MAxEnt
+```{r}
+jar <- paste(system.file(package="dismo"), "/java/maxent.jar", sep='')
+xm <- maxent(predictors_cropped_to_mexico, pres_train_your_species, factors='biome')
+plot(xm)
+```
+
+Contruimos el mapa
+```{r}
+e <- evaluate(pres_test_your_species, backg_test, xm, predictors_cropped_to_mexico)
+e
+```
+
+
+```{r}
+px <- predict(predictors_cropped_to_mexico, xm, ext=extent_of_mexico_map, progress='')
+par(mfrow=c(1,2))
+plot(px, main='## Eucalyptus ##')
+```
+
+Apariciones por estado
+```{r}
+states_factor <- as.factor(eucalyptus_points$stateProvince)
+counted_states <- plyr::count(states_factor)
+plot(counted_states$x, counted_states$freq)
+```
+
