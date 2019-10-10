@@ -2,6 +2,8 @@
 Hi! this is a R script that traces the most likely areas invasive species could migrate, according to environmental factors, related to the occurrence of this species.
 
 ## Notebook
+[Link to Notebook](http://rpubs.com/humberto_medina/537704 "Link to Notebook")
+
 ![Image of notebook 1](Img/Eucalyptus_Notebook-1.png)
 ![Image of notebook 2](Img/Eucalyptus_Notebook-2.png)
 ![Image of notebook 3](Img/Eucalyptus_Notebook-3.png)
